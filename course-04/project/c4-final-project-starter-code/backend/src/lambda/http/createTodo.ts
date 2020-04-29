@@ -3,14 +3,10 @@ import 'source-map-support/register'
 import { APIGatewayProxyEvent, APIGatewayProxyHandler, APIGatewayProxyResult } from 'aws-lambda'
 
 import { CreateTodoRequest } from '../../requests/CreateTodoRequest'
-import * as AWS  from 'aws-sdk'
 import * as uuid from 'uuid'
-import {getToken, parseUserId} from "../../auth/utils";
+import { getUserIdFromToken } from "../../auth/utils";
 import { createLogger } from '../../utils/logger'
-
-const todosTable = process.env.TODO_TABLE
-
-const docClient = new AWS.DynamoDB.DocumentClient()
+import { createTodos } from "../../service/dynamodb/todosOperation";
 
 const logger = createLogger('createToDo')
 
@@ -19,22 +15,10 @@ export const handler: APIGatewayProxyHandler = async (event: APIGatewayProxyEven
   logger.info(newTodoItem)
 
   const bearerToken = event.headers.Authorization
-  const token = getToken(bearerToken)
-  const userId = parseUserId(token)
-
+  const userId = getUserIdFromToken(bearerToken)
   const todoId = uuid.v4()
 
-  const newTodo = {
-    todoId: todoId,
-    userId: userId,
-    ...newTodoItem
-  }
-
-  // TODO: Implement creating a new TODO item
-  await docClient.put({
-    TableName: todosTable,
-    Item: newTodo
-  }).promise()
+  const item = await createTodos(todoId, userId, newTodoItem)
 
   return {
     statusCode: 201,
@@ -43,7 +27,7 @@ export const handler: APIGatewayProxyHandler = async (event: APIGatewayProxyEven
       'Access-Control-Allow-Credentials': true
     },
     body: JSON.stringify({
-      newTodo
+      item
     })
   }
 }

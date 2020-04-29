@@ -14,7 +14,7 @@ export async function getTodos(idToken: string): Promise<Todo[]> {
     },
   })
   console.log('Todos:', response.data)
-  return response.data.Items
+  return response.data.items
 }
 
 export async function createTodo(
@@ -27,8 +27,8 @@ export async function createTodo(
       'Authorization': `Bearer ${idToken}`
     }
   })
-  console.log(response.data)
-  return response.data.newTodo
+
+  return response.data.item
 }
 
 export async function patchTodo(
@@ -66,12 +66,9 @@ export async function getUploadUrl(
       'Authorization': `Bearer ${idToken}`
     }
   })
-
-  console.log(response.data.uploadUrl)
   return response.data.uploadUrl
 }
 
 export async function uploadFile(uploadUrl: string, file: Buffer): Promise<void> {
-  console.log('Upload Url: ' + uploadUrl)
   await Axios.put(uploadUrl, file)
 }

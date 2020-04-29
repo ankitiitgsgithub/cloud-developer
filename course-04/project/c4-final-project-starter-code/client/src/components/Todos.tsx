@@ -93,11 +93,19 @@ export class Todos extends React.PureComponent<TodosProps, TodosState> {
     try {
       const todos = await getTodos(this.props.auth.getIdToken())
       this.setState({
-        todos: todos,
+        todos,
         loadingTodos: false
       })
     } catch (e) {
-      alert(`Failed to fetch todos: ${e.message}`)
+      const errorMessage: string = e.message
+      alert('404: No Todo items found')
+      if (errorMessage === 'Request failed with status code 404') {
+        this.setState({
+          loadingTodos: false
+        })
+      } else {
+        alert(`Failed to fetch todos : ${e.message}`)
+      }
     }
   }
 

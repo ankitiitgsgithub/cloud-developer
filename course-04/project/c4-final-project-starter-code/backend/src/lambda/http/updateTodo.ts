@@ -4,11 +4,7 @@ import { APIGatewayProxyEvent, APIGatewayProxyHandler, APIGatewayProxyResult } f
 
 import { UpdateTodoRequest } from '../../requests/UpdateTodoRequest'
 import { createLogger } from '../../utils/logger'
-import * as AWS  from 'aws-sdk'
-
-const todosTable = process.env.TODO_TABLE
-
-const docClient = new AWS.DynamoDB.DocumentClient()
+import {updateTodos} from "../../service/dynamodb/todosOperation";
 
 const logger = createLogger('updateTodo')
 
@@ -19,15 +15,7 @@ export const handler: APIGatewayProxyHandler = async (event: APIGatewayProxyEven
   logger.info(updatedTodo)
 
   // TODO: Update a TODO item with the provided id using values in the "updatedTodo" object
-  await docClient.update({
-    TableName: todosTable,
-    Key: { "todoId": todoId },
-    UpdateExpression: 'set done = :doneValue',
-    ExpressionAttributeValues:{
-      ':doneValue': 'true'
-    },
-    ReturnValues:"UPDATED_NEW"
-  }).promise()
+  await updateTodos(todoId)
 
   return {
     statusCode: 200,

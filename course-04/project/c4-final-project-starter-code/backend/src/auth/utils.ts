@@ -23,3 +23,10 @@ export function getToken(authHeader: string): string {
 
   return token
 }
+
+export function getUserIdFromToken(bearerToken: string): string {
+  const token = getToken(bearerToken)
+  const userId = parseUserId(token)
+
+  return userId
+}

@@ -2,17 +2,9 @@ import 'source-map-support/register'
 
 import { APIGatewayProxyEvent, APIGatewayProxyResult, APIGatewayProxyHandler } from 'aws-lambda'
 
-import * as AWS from 'aws-sdk'
 import { createLogger } from '../../utils/logger'
-
-const todosTable = process.env.TODO_TABLE
-const bucketName = process.env.TODO_S3_BUCKET
-
-const docClient = new AWS.DynamoDB.DocumentClient()
-const s3 = new AWS.S3({
-  signatureVersion: 'v4',
-  params: {Bucket: bucketName}
-})
+import {updateAttachmentUrl} from "../../service/dynamodb/todosOperation";
+import {getSignedUrlForGet, getSignedUrlForPut} from "../../service/s3/todosOperation";
 
 const logger = createLogger('generateUploadUrl')
 
@@ -21,27 +13,10 @@ export const handler: APIGatewayProxyHandler = async (event: APIGatewayProxyEven
   logger.info(todoId)
 
   // TODO: Return a presigned URL to upload a file for a TODO item with the provided id
-  const signedUrlForPut = s3.getSignedUrl('putObject', {
-    Bucket: bucketName,
-    Key: todoId,
-    Expires: 30000
-  })
+  const signedUrlForPut = getSignedUrlForPut(todoId)
+  const signedUrlForGet = getSignedUrlForGet(todoId)
 
-  const signedUrlForGet = s3.getSignedUrl('getObject', {
-    Bucket: bucketName,
-    Key: todoId,
-    Expires: 30000
-  })
-
-  await docClient.update({
-    TableName: todosTable,
-    Key: { "todoId": todoId },
-    UpdateExpression: 'set attachmentUrl = :attachmentUrlValue',
-    ExpressionAttributeValues:{
-      ':attachmentUrlValue': signedUrlForGet
-    },
-    ReturnValues:"UPDATED_NEW"
-  }).promise()
+  await updateAttachmentUrl(todoId, signedUrlForGet)
 
   return {
     statusCode: 200,
